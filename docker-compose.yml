@@ -2,7 +2,7 @@ services:
   postgres:
     image: postgres:18-alpine
     restart: always
-    container_name: ${DATABASE_DB}
+    container_name: price_db
     environment:
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
@@ -17,6 +17,15 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+  rust-api:
+    image: rust-api:latest
+    pull_policy: never
+    build:
+      context: rust-api/
+    restart: always
+    container_name: price_rust
+    ports:
+      - 8080:8080
 
 volumes:
   pgdata:
