@@ -1,0 +1,16 @@
+name: Backend CI
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  rust-api-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Run Cargo Test
+        run: |
+          cd rust-api/
+          cargo test

@@ -22,3 +22,55 @@ pub async fn compare(params: web::Query<CompareParams>) -> Result<impl Responder
 
     Ok(HttpResponse::Ok().body("Dates are valid"))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_web::{test, App};
+
+    #[actix_web::test]
+    async fn test_compare_valid() {
+        let app = test::init_service(App::new().route("/v1/compare", web::get().to(compare))).await;
+        let req = test::TestRequest::get()
+            .uri("/v1/compare?start_date=2023-01-01&end_date=2023-01-31")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert!(resp.status().is_success());
+    }
+
+    #[actix_web::test]
+    async fn test_compare_invalid_start_date() {
+        let app = test::init_service(App::new().route("/v1/compare", web::get().to(compare))).await;
+        let req = test::TestRequest::get()
+            .uri("/v1/compare?start_date=invalid&end_date=2023-01-31")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), actix_web::http::StatusCode::BAD_REQUEST);
+        let body = test::read_body(resp).await;
+        assert_eq!(body, "start_date is invalid".as_bytes());
+    }
+
+    #[actix_web::test]
+    async fn test_compare_invalid_end_date() {
+        let app = test::init_service(App::new().route("/v1/compare", web::get().to(compare))).await;
+        let req = test::TestRequest::get()
+            .uri("/v1/compare?start_date=2023-01-01&end_date=invalid")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), actix_web::http::StatusCode::BAD_REQUEST);
+        let body = test::read_body(resp).await;
+        assert_eq!(body, "end_date is invalid".as_bytes());
+    }
+
+    #[actix_web::test]
+    async fn test_compare_start_after_end() {
+        let app = test::init_service(App::new().route("/v1/compare", web::get().to(compare))).await;
+        let req = test::TestRequest::get()
+            .uri("/v1/compare?start_date=2023-02-01&end_date=2023-01-31")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), actix_web::http::StatusCode::BAD_REQUEST);
+        let body = test::read_body(resp).await;
+        assert_eq!(body, "start_date is after end_date".as_bytes());
+    }
+}
