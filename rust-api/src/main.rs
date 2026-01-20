@@ -11,7 +11,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .route("/v1/compare", web::get().to(compare))
     })
-    .bind("127.0.0.1:8080")?
+    .bind("0.0.0.0:8080")?
     .run()
     .await
 }

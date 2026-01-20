@@ -9,8 +9,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
-      - name: Run Cargo Test
+        uses: actions/checkout@v6
+      - name: Set up Rust
         run: |
-          cd rust-api/
-          cargo test
+          sudo apt update
+          sudo apt install curl build-essential gcc make -y
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+      - name: Run Cargo Test
+        working-directory: rust-api
+        run: cargo test
+  python-api-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - name: Install dependencies
+        working-directory: python-api
+        run: pip install --no-cache-dir -r requirements-dev.txt
+      - name: Run Pytest
+        working-directory: python-api
+        run: python -m pytest src/tests
