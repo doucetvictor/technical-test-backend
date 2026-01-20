@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:18-alpine
-    restart: always
+    restart: unless-stopped
     container_name: price_db
     environment:
       POSTGRES_USER: ${DATABASE_USER}
@@ -17,15 +17,29 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+  python-api:
+    image: python-api:latest
+    pull_policy: never
+    build:
+      context: python-api/
+    restart: unless-stopped
+    container_name: python_api
+    ports:
+      - 8081:8081
+    depends_on:
+      postgres:
+        condition: service_healthy
   rust-api:
     image: rust-api:latest
     pull_policy: never
     build:
       context: rust-api/
-    restart: always
+    restart: unless-stopped
     container_name: price_rust
     ports:
       - 8080:8080
+    depends_on:
+      - python-api
 
 volumes:
   pgdata:
