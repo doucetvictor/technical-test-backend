@@ -3,6 +3,8 @@ use serde::Deserialize;
 use chrono::NaiveDate;
 use crate::errors::MyError;
 use reqwest::Client;
+use crate::config::Config;
+use std::time::Duration;
 
 #[derive(Debug, Deserialize)]
 pub struct CompareParams {
@@ -10,7 +12,11 @@ pub struct CompareParams {
     end_date: String,
 }
 
-pub async fn compare(params: web::Query<CompareParams>, client: web::Data<Client>) -> Result<impl Responder, MyError> {
+pub async fn compare(
+    params: web::Query<CompareParams>,
+    client: web::Data<Client>,
+    config: web::Data<Config>,
+) -> Result<impl Responder, MyError> {
     let start_date = NaiveDate::parse_from_str(&params.start_date, "%Y-%m-%d")
         .map_err(|_| MyError::BadClientData("start_date is invalid".to_string()))?;
 
@@ -22,16 +28,24 @@ pub async fn compare(params: web::Query<CompareParams>, client: web::Data<Client
     }
 
     let url = format!(
-        "http://python-api:8081/v1/compare?start_date={}&end_date={}",
+        "{}/v1/compare?start_date={}&end_date={}",
+        config.general.python_api_url,
         start_date.format("%Y-%m-%d"),
         end_date.format("%Y-%m-%d")
     );
 
     let response = client
         .get(url)
+        .timeout(Duration::from_secs(config.general.timeout))
         .send()
         .await
-        .map_err(|e| MyError::InternalError(format!("Failed to call Python API: {}", e)))?;
+        .map_err(|e| {
+            if e.is_timeout() {
+                MyError::Timeout
+            } else {
+                MyError::InternalError(format!("Failed to call Python API: {}", e))
+            }
+        })?;
 
     if response.status().is_success() {
         let body = response

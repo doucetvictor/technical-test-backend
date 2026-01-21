@@ -1,0 +1,5 @@
+[general]
+bind_address = "0.0.0.0:8080"
+python_api_url = "http://python-api:8081"
+timeout = 10
+logging = "info"

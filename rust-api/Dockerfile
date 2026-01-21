@@ -11,6 +11,7 @@ FROM debian:12-slim
 WORKDIR /app
 
 COPY --from=builder /app/target/release/rust-api /app/rust-api
+COPY config.toml ./
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates \
