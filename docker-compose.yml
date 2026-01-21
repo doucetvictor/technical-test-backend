@@ -17,6 +17,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - my_network
   python-api:
     image: python-api:latest
     pull_policy: never
@@ -29,6 +31,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - my_network
   rust-api:
     image: rust-api:latest
     pull_policy: never
@@ -40,6 +44,11 @@ services:
       - 8080:8080
     depends_on:
       - python-api
+    networks:
+      - my_network
 
 volumes:
   pgdata:
+
+networks:
+  my_network:

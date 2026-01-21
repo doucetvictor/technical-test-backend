@@ -18,4 +18,4 @@ async def compare(start_date: str, end_date: str):
     if start > end:
         return Response(content="start_date is after end_date", status_code=400)
 
-    return {"message": "Dates are valid"}
+    return Response(content="Dates are valid", status_code=200)

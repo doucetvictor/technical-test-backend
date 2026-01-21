@@ -2,6 +2,7 @@ use actix_web::{web, HttpResponse, Responder};
 use serde::Deserialize;
 use chrono::NaiveDate;
 use crate::errors::MyError;
+use reqwest::Client;
 
 #[derive(Debug, Deserialize)]
 pub struct CompareParams {
@@ -9,7 +10,7 @@ pub struct CompareParams {
     end_date: String,
 }
 
-pub async fn compare(params: web::Query<CompareParams>) -> Result<impl Responder, MyError> {
+pub async fn compare(params: web::Query<CompareParams>, client: web::Data<Client>) -> Result<impl Responder, MyError> {
     let start_date = NaiveDate::parse_from_str(&params.start_date, "%Y-%m-%d")
         .map_err(|_| MyError::BadClientData("start_date is invalid".to_string()))?;
 
@@ -20,7 +21,27 @@ pub async fn compare(params: web::Query<CompareParams>) -> Result<impl Responder
         return Err(MyError::BadClientData("start_date is after end_date".to_string()));
     }
 
-    Ok(HttpResponse::Ok().body("Dates are valid"))
+    let url = format!(
+        "http://python-api:8081/v1/compare?start_date={}&end_date={}",
+        start_date.format("%Y-%m-%d"),
+        end_date.format("%Y-%m-%d")
+    );
+
+    let response = client
+        .get(url)
+        .send()
+        .await
+        .map_err(|e| MyError::InternalError(format!("Failed to call Python API: {}", e)))?;
+
+    if response.status().is_success() {
+        let body = response
+            .text()
+            .await
+            .map_err(|e| MyError::InternalError(format!("Failed to read body: {}", e)))?;
+        Ok(HttpResponse::Ok().body(body))
+    } else {
+        Err(MyError::InternalError(format!("Python API returned error: {}", response.status())))
+    }
 }
 
 #[cfg(test)]
