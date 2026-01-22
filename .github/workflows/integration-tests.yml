@@ -33,3 +33,12 @@ jobs:
       - name: Run Pytest
         working-directory: python-api
         run: python -m pytest src/tests
+  integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+      - name: Start Docker Compose
+        run: docker compose up --wait
+      - name: Run Integration Tests
+        run: ./integration_tests.sh

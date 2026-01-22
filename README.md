@@ -1,5 +1,78 @@
 # Technical Test for Backend Application (Quantfox)
 
+## Quick Start Guide
+
+### Prerequisites
+
+- Docker and Docker Compose installed
+- Git (to clone the repository)
+- Internet connection to download dependencies
+
+### System Architecture
+
+The system consists of:
+- **Rust API** - Public HTTP service that validates date parameters and forwards requests
+- **Python API** - Internal service that computes daily average prices using Celery tasks
+- **PostgreSQL Database** - Stores pricing data
+- **Redis** - Celery broker and message queue
+- **Celery Worker** - Background task processor
+
+### Configuration
+
+All configuration is stored in TOML files:
+- `rust-api/config.toml` - Rust service configuration (port, Python API URL, timeout)
+- `python-api/config.toml` - Python service configuration (database, Celery broker)
+
+### Starting the System
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd technical-test-backend
+
+# Start all services with Docker Compose
+docker compose up
+```
+
+The system is ready when you see no more error logs. Services are available at:
+- Rust API: `http://localhost:8080`
+- Python API: `http://localhost:8081`
+
+### Database Seeding
+
+The database initializes automatically with sample data from `init.sql` when Docker Compose starts. To manually seed additional data, connect to PostgreSQL and run SQL commands.
+
+### Example HTTP Requests and Responses
+
+#### Valid Request (Success)
+```bash
+curl "http://localhost:8080/v1/compare?start_date=2025-01-01&end_date=2025-01-03"
+```
+
+**Response (200 OK):**
+```json
+[
+  {
+    "day": "2025-01-01",
+    "average_price": 101.05
+  },
+  {
+    "day": "2025-01-02",
+    "average_price": 102.45
+  }
+]
+```
+
+#### Missing Parameter (Error)
+```bash
+curl "http://localhost:8080/v1/compare?start_date=invalid&end_date=2023-01-31"
+```
+
+**Response (400 Bad Request):**
+```
+start_date is invalid
+```
+
 ## Objective
 
 The objective of this technical test is to evaluate your ability to design a complete backend system involving multiple microservices, asynchronous computation, correct data handling, robust validation and containerization. You are expected to deliver a Rust HTTP API using Actix Web and Tokio, a Python HTTP API using Celery for background computation, and a fully functional Docker Compose environment that includes all services, including the database. Every configuration file used in this project must be written in TOML format.

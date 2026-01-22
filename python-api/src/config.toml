@@ -1,0 +1,10 @@
+[compute_average_price]
+timeout = 10
+
+[celery]
+broker_url = "redis://redis:6379/0"
+result_backend = "redis://redis:6379/0"
+concurrency = 4
+
+[database]
+url = "postgresql://quantfox:quantfox@postgres:5432/quantfox"
