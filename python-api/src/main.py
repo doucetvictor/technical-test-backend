@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
-from .routes import compare
+from .routes import compare, healthy
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 app = FastAPI()
@@ -14,3 +14,4 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     return Response(status_code=400)
 
 app.include_router(compare.router, prefix="/v1")
+app.include_router(healthy.router, prefix="/v1")

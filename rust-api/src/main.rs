@@ -7,6 +7,7 @@ mod errors;
 mod routes;
 
 use crate::routes::compare::compare;
+use crate::routes::healthy::healthy;
 use crate::config::Config;
 
 #[tokio::main]
@@ -30,6 +31,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(client.clone()))
             .app_data(web::Data::new(config.clone()))
             .route("/v1/compare", web::get().to(compare))
+            .route("/v1/healthy", web::get().to(healthy))
     })
     .bind(bind_address)?
     .run()

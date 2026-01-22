@@ -46,6 +46,11 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/v1/healthy"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - my_network
   celery-worker:
@@ -73,7 +78,13 @@ services:
     ports:
       - 8080:8080
     depends_on:
-      - python-api
+      python-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/v1/healthy"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - my_network
 
