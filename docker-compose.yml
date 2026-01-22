@@ -4,16 +4,29 @@ services:
     restart: unless-stopped
     container_name: price_db
     environment:
-      POSTGRES_USER: ${DATABASE_USER}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-      POSTGRES_DB: ${DATABASE_DB}
+      POSTGRES_USER: quantfox
+      POSTGRES_PASSWORD: quantfox
+      POSTGRES_DB: quantfox
     ports:
       - 5432:5432
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U quantfox -d quantfox"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - my_network
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    container_name: price_redis
+    ports:
+      - 6379:6379
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -25,11 +38,28 @@ services:
     build:
       context: python-api/
     restart: unless-stopped
-    container_name: python_api
+    container_name: price_python
     ports:
       - 8081:8081
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - my_network
+  celery-worker:
+    image: python-api:latest
+    pull_policy: never
+    build:
+      context: python-api/
+    restart: unless-stopped
+    container_name: price_celery
+    command: celery -A src.celery:celery_app worker --loglevel=info
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - my_network
